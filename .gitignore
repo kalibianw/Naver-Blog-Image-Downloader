@@ -1,2 +1,5 @@
 .idea
 __pycache__
+/build/
+/dist/
+/Naver Blog Image Downloader.spec
