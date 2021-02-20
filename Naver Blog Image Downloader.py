@@ -21,6 +21,7 @@ global number_of_imgs
 global make_folder_status
 global post_title
 global ext
+
 last_download_path = "./"
 special_characters = ["/", "?", '"', "'", "<", ">", "＼", "-", "  ", "*", ":"]
 
@@ -104,7 +105,7 @@ class DownloadModule:
                 count += 1
 
         if count == 0:
-            chrome_webdriver_path = "chromedriver.exe"
+            chrome_webdriver_path = "C:/tools/webdriver/chromedriver.exe"
             chrome_webdriver_options = webdriver.ChromeOptions()
             chrome_webdriver_options.add_argument(argument="headless")
             chrome_webdriver_options.add_argument(argument="disable-gpu")
@@ -161,8 +162,13 @@ class MainWindow(QWidget):
         self.m_blog_url = QLineEdit()
 
         self.make_folder = QCheckBox("Make Folder", self)
+
         self.img_combine = None
         self.post_num = None
+        self.partial_download = None
+        self.partial_number = None
+
+        self.main_btn = QPushButton("Done", self)
 
         self.initUI()
 
@@ -180,9 +186,8 @@ class MainWindow(QWidget):
         self.make_folder.setChecked(True)
         self.grid.addWidget(self.make_folder, 2, 0)
 
-        main_btn = QPushButton("Done", self)
-        main_btn.clicked.connect(self.btn1Method)
-        self.grid.addWidget(main_btn, 3, 1)
+        self.main_btn.clicked.connect(self.btn1Method)
+        self.grid.addWidget(self.main_btn, 4, 1)
 
     def radioMethod(self):
         if self.post_btn.isChecked() is True:
@@ -197,14 +202,27 @@ class MainWindow(QWidget):
             self.grid.removeWidget(self.img_combine)
             self.img_combine.deleteLater()
 
+            self.grid.removeWidget(self.partial_download)
+            self.partial_download.deleteLater()
+
+            self.grid.removeWidget(self.partial_number)
+            self.partial_number.deleteLater()
+
         elif self.cat_btn.isChecked() is True:
             self.img_combine = QCheckBox("Combine posts images", self)
             self.grid.addWidget(self.img_combine, 2, 1)
             self.img_combine.setChecked(False)
 
+            self.partial_download = QCheckBox("Partial download\nfrom 'POST_ID'", self)
+            self.grid.addWidget(self.partial_download, 3, 0)
+            self.partial_download.setChecked(False)
+
+            self.partial_number = QLineEdit()
+            self.grid.addWidget(self.partial_number, 3, 1)
+
             self.post_num = QCheckBox("Add post number", self)
             self.post_num.setChecked(False)
-            self.grid.addWidget(self.post_num, 3, 0)
+            self.grid.addWidget(self.post_num, 4, 0)
 
             self.grid.removeWidget(self.url_label)
             self.url_label.deleteLater()
@@ -221,6 +239,9 @@ class MainWindow(QWidget):
         print(f"Make Folder status: {self.make_folder.isChecked()}")
         print(f"post_btn status: {self.post_btn.isChecked()}")
         print(f"cat_btn status: {self.cat_btn.isChecked()}")
+        print(f"partial_download status: {self.partial_download.isChecked()}")
+        if self.partial_download.isChecked() is True:
+            print(f"partial_download post id: {self.partial_number.text()}")
         blog_url = self.m_blog_url.text()
 
         parsed_url = list(parse.urlparse(blog_url))
@@ -235,7 +256,10 @@ class MainWindow(QWidget):
             self.close()
             self.cd = CategoryDownload(blog_url=blog_url,
                                        img_combine_status=self.img_combine.isChecked(),
-                                       post_num_status=self.post_num.isChecked())
+                                       post_num_status=self.post_num.isChecked(),
+                                       partial_download_status=self.partial_download.isChecked(),
+                                       partial_post_id=self.partial_number.text()
+                                       )
 
         else:
             print("status_code:", requests.get(blog_url).status_code)
@@ -268,7 +292,7 @@ class MainWindow(QWidget):
 
 
 class CategoryDownload(QWidget):
-    def __init__(self, blog_url: str, img_combine_status: bool, post_num_status: bool):
+    def __init__(self, blog_url: str, img_combine_status: bool, post_num_status: bool, partial_download_status: bool, partial_post_id: any):
         super().__init__()
         self.setWindowTitle("Category Downloading...")
 
@@ -278,6 +302,9 @@ class CategoryDownload(QWidget):
 
         self.img_combine_status = img_combine_status
         self.post_num_status = post_num_status
+        self.partial_download_status = partial_download_status
+        self.partial_post_id = partial_post_id
+
         self.return_signal = False
 
         self.setFixedSize(320, 60)
@@ -307,7 +334,7 @@ class CategoryDownload(QWidget):
             self.err_page = ErrorPage(code="URLError")
             self.err_page.show()
         else:
-            chrome_driver_loc = "chromedriver.exe"
+            chrome_driver_loc = "C:/tools/webdriver/chromedriver.exe"
             chrome_driver_options = webdriver.ChromeOptions()
             chrome_driver_options.add_argument(argument="headless")
             chrome_driver_options.add_argument(argument="window-size=1920x1080")
@@ -396,7 +423,16 @@ class CategoryDownload(QWidget):
                 per = len(post_ids) / 1000
                 print(f"per: {per}")
                 title_history = list()
+
                 for post_num, post_id in enumerate(post_ids):
+                    if self.partial_download_status is True:
+                        if post_id[0] != self.partial_post_id:
+                            print(f"Skip this post id({post_id})")
+                            continue
+                        elif post_id[0] == self.partial_post_id:
+                            print(f"Start download from {post_id}")
+                            self.partial_download_status = False
+
                     self.pbar.setFormat("%.1f %%" % (post_num / per / 10))
                     QApplication.processEvents()
                     self.pbar.setValue((post_num / per / 10))
