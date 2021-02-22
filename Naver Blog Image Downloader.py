@@ -105,7 +105,7 @@ class DownloadModule:
                 count += 1
 
         if count == 0:
-            chrome_webdriver_path = "C:/tools/webdriver/chromedriver.exe"
+            chrome_webdriver_path = "chromedriver.exe"
             chrome_webdriver_options = webdriver.ChromeOptions()
             chrome_webdriver_options.add_argument(argument="headless")
             chrome_webdriver_options.add_argument(argument="disable-gpu")
