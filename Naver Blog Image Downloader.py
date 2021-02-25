@@ -239,9 +239,7 @@ class MainWindow(QWidget):
         print(f"Make Folder status: {self.make_folder.isChecked()}")
         print(f"post_btn status: {self.post_btn.isChecked()}")
         print(f"cat_btn status: {self.cat_btn.isChecked()}")
-        print(f"partial_download status: {self.partial_download.isChecked()}")
-        if self.partial_download.isChecked() is True:
-            print(f"partial_download post id: {self.partial_number.text()}")
+
         blog_url = self.m_blog_url.text()
 
         parsed_url = list(parse.urlparse(blog_url))
@@ -304,6 +302,10 @@ class CategoryDownload(QWidget):
         self.post_num_status = post_num_status
         self.partial_download_status = partial_download_status
         self.partial_post_id = partial_post_id
+
+        print(f"partial_download status: {self.partial_download_status}")
+        if partial_download_status is True:
+            print(f"partial_download post id: {self.partial_post_id}")
 
         self.return_signal = False
 
