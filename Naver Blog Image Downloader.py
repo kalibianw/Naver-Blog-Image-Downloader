@@ -213,7 +213,7 @@ class MainWindow(QWidget):
             self.grid.addWidget(self.img_combine, 2, 1)
             self.img_combine.setChecked(False)
 
-            self.partial_download = QCheckBox("Partial download\nfrom 'POST_ID'", self)
+            self.partial_download = QCheckBox("Partial download\npost id", self)
             self.grid.addWidget(self.partial_download, 3, 0)
             self.partial_download.setChecked(False)
 
@@ -349,7 +349,11 @@ class CategoryDownload(QWidget):
 
             last_height = chrome_driver.execute_script("return document.body.scrollHeight")
             time.sleep(3)
-            viewer_mode = chrome_driver.find_element_by_xpath("/html/body/ui-view/bg-nsc/div[9]/div[6]/div/div[1]/div/button[1]")
+            try:
+                viewer_mode = chrome_driver.find_element_by_xpath("/html/body/ui-view/bg-nsc/div[9]/div[6]/div/div[1]/div/button[1]")
+            except Exception:
+                print("Error occured. Trying another way.")
+                viewer_mode = chrome_driver.find_element_by_xpath("/html/body/ui-view/bg-nsc/div[9]/div[5]/div/div[1]/div/button[1]")
             viewer_mode.click()
 
             scroll_count = 0
@@ -371,7 +375,11 @@ class CategoryDownload(QWidget):
             html = chrome_driver.page_source
             soup = bs(html, "html.parser")
 
-            category_title = chrome_driver.find_element_by_xpath(xpath="/html/body/ui-view/bg-nsc/div[9]/div[6]/div/div[1]/h3/a/span").text
+            try:
+                category_title = chrome_driver.find_element_by_xpath(xpath="/html/body/ui-view/bg-nsc/div[9]/div[6]/div/div[1]/h3/a/span").text
+            except Exception:
+                print("Error occured. Trying another way.")
+                category_title = chrome_driver.find_element_by_xpath(xpath="/html/body/ui-view/bg-nsc/div[9]/div[5]/div/div[1]/h3/a/span").text
             for special_character in special_characters:
                 category_title = category_title.replace(special_character, "")
 
