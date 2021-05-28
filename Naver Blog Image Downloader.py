@@ -336,7 +336,7 @@ class CategoryDownload(QWidget):
             self.err_page = ErrorPage(code="URLError")
             self.err_page.show()
         else:
-            chrome_driver_loc = "C:/tools/webdriver/chromedriver.exe"
+            chrome_driver_loc = "chromedriver.exe"
             chrome_driver_options = webdriver.ChromeOptions()
             chrome_driver_options.add_argument(argument="headless")
             chrome_driver_options.add_argument(argument="window-size=1920x1080")
@@ -425,9 +425,10 @@ class CategoryDownload(QWidget):
 
             else:
                 self.dir_loc = self.fname + "/" + category_title
-                if os.path.exists(self.dir_loc) is False:
-                    print(f"Make directory at {self.dir_loc}")
-                    os.mkdir(f"{self.dir_loc}")
+                if make_folder_status is True:
+                    if os.path.exists(self.dir_loc) is False:
+                        print(f"Make directory at {self.dir_loc}")
+                        os.mkdir(f"{self.dir_loc}")
 
                 failed_urls = list()
                 per = len(post_ids) / 1000
@@ -474,6 +475,8 @@ class CategoryDownload(QWidget):
                     if self.img_combine_status is True:
                         imgs = list()
                         for img_url in img_urls:
+                            if img_url == "https://ssl.pstatic.net/static/blog/blank.gif":
+                                continue
                             org_name = parse.urlparse(img_url).path.split("/")[-1]
                             org_name, ext = os.path.splitext(org_name)
                             if ext == ".gif":
@@ -518,16 +521,19 @@ class CategoryDownload(QWidget):
                                 continue
                         elif make_folder_status is False:
                             if self.post_num_status is True:
-                                print(f"Image write at {self.dir_loc}/{post_num} {post_title}{ext}")
-                                im_buf_arr.tofile(f"{self.dir_loc}/{post_num} {post_title}{ext}")
+                                print(f"Image write at {self.fname}/{post_num} {post_title}{ext}")
+                                im_buf_arr.tofile(f"{self.fname}/{post_num} {post_title}{ext}")
                                 continue
                             else:
-                                print(f"Image write at {self.dir_loc}/{post_title}{ext}")
-                                im_buf_arr.tofile(f"{self.dir_loc}/{post_title}{ext}")
+                                print(f"Image write at {self.fname}/{post_title}{ext}")
+                                im_buf_arr.tofile(f"{self.fname}/{post_title}{ext}")
                                 continue
                     elif self.img_combine_status is False:
                         for img_url_num, img_url in enumerate(img_urls):
+                            if img_url == "https://ssl.pstatic.net/static/blog/blank.gif":
+                                continue
                             splited_url_1 = img_url.rsplit("?", 1)
+                            print(f"splited_url_1: {splited_url_1}")
                             splited_url_1[1] = "?" + splited_url_1[1]
                             splited_url_2 = splited_url_1[0].rsplit("/", 1)
                             splited_url_2[1] = "/" + parse.quote(splited_url_2[1]) + splited_url_1[1]
@@ -575,12 +581,12 @@ class CategoryDownload(QWidget):
                                         continue
                                 elif make_folder_status is False:
                                     if self.post_num_status is True:
-                                        print(f"Download file name: {self.dir_loc}/{post_num} {post_title}_{img_url_num}{ext}")
-                                        req.urlretrieve(img_url, filename=f"{self.dir_loc}/{post_num} {post_title}_{img_url_num}{ext}")
+                                        print(f"Download file name: {self.fname}/{post_num} {post_title}_{img_url_num}{ext}")
+                                        req.urlretrieve(img_url, filename=f"{self.fname}/{post_num} {post_title}_{img_url_num}{ext}")
                                         continue
                                     else:
-                                        print(f"Download file name: {self.dir_loc}/{post_title}_{img_url_num}{ext}")
-                                        req.urlretrieve(img_url, filename=f"{self.dir_loc}/{post_title}_{img_url_num}{ext}")
+                                        print(f"Download file name: {self.fname}/{post_title}_{img_url_num}{ext}")
+                                        req.urlretrieve(img_url, filename=f"{self.fname}/{post_title}_{img_url_num}{ext}")
                                         continue
 
                             try:
@@ -613,12 +619,12 @@ class CategoryDownload(QWidget):
                                     continue
                             elif make_folder_status is False:
                                 if self.post_num_status is True:
-                                    print(f"Download file name: {self.dir_loc}/{post_num} {post_title}_{img_url_num}{ext}")
-                                    im_buf_arr.tofile(f"{self.dir_loc}/{post_num} {post_title}_{img_url_num}{ext}")
+                                    print(f"Download file name: {self.fname}/{post_num} {post_title}_{img_url_num}{ext}")
+                                    im_buf_arr.tofile(f"{self.fname}/{post_num} {post_title}_{img_url_num}{ext}")
                                     continue
                                 else:
-                                    print(f"Download file name: {self.dir_loc}/{post_title}_{img_url_num}{ext}")
-                                    im_buf_arr.tofile(f"{self.dir_loc}/{post_title}_{img_url_num}{ext}")
+                                    print(f"Download file name: {self.fname}/{post_title}_{img_url_num}{ext}")
+                                    im_buf_arr.tofile(f"{self.fname}/{post_title}_{img_url_num}{ext}")
                                     continue
 
                 if len(failed_urls) > 0:
@@ -639,7 +645,10 @@ class CategoryDownload(QWidget):
         reply = QMessageBox.question(self, "Message", "다운로드 한 파일이 있는\n디렉터리를 여시겠습니까?",
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            os.startfile(f"{self.dir_loc}")
+            if make_folder_status is True:
+                os.startfile(f"{self.dir_loc}")
+            else:
+                os.startfile(f"{self.fname}")
         else:
             pass
 
@@ -701,6 +710,10 @@ class ShowPicWindow(QWidget):
 
             width = pixmap.width()
             height = pixmap.height()
+
+            if (width < 5) or (height < 5):
+                print("Skip image")
+                continue
 
             new_width, new_height = image_resize(width, height, 125)
 
